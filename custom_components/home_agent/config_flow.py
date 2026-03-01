@@ -923,7 +923,8 @@ class HomeAgentOptionsFlow(config_entries.OptionsFlow):
                         default=current_options.get(
                             CONF_SESSION_TIMEOUT,
                             current_data.get(CONF_SESSION_TIMEOUT, DEFAULT_SESSION_TIMEOUT),
-                        ) // 60,
+                        ) 
+                        // 60,
                     ): vol.All(vol.Coerce(int), vol.Range(min=1, max=120)),
                     vol.Required(
                         CONF_CONTINUE_ON_QUESTION,
