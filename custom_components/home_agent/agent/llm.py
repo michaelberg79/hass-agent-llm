@@ -186,6 +186,7 @@ class LLMMixin:
         tools: list[dict[str, Any]] | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
+        stream: bool = False,
     ) -> dict[str, Any]:
         """Call the LLM API.
 
@@ -236,7 +237,7 @@ class LLMMixin:
                 max_tokens if max_tokens is not None else self.config.get(CONF_LLM_MAX_TOKENS, 500)
             ),
             "top_p": self.config.get(CONF_LLM_TOP_P, 1.0),
-            "stream": False,
+            "stream": stream,
         }
 
         # Only include keep_alive for Ollama backends (not supported by OpenAI, etc.)
