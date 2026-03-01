@@ -186,7 +186,7 @@ class LLMMixin:
         tools: list[dict[str, Any]] | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
-        stream: bool = False,
+        stream: str | None = None,
     ) -> dict[str, Any]:
         """Call the LLM API.
 
@@ -224,7 +224,7 @@ class LLMMixin:
         proxy_headers = self.config.get(CONF_LLM_PROXY_HEADERS, {})
         if proxy_headers:
             headers.update(proxy_headers)
-
+            
         payload: dict[str, Any] = {
             "model": self.config[CONF_LLM_MODEL],
             "messages": messages,
