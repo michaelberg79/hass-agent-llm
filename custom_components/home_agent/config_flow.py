@@ -583,6 +583,7 @@ class HomeAgentOptionsFlow(config_entries.OptionsFlow):
                 errors["base"] = "unknown"
 
         # Get current values from entry.data (not options)
+        current_options = self._config_entry.options
         current_data = self._config_entry.data
 
         # Convert proxy headers dict to JSON string for display
@@ -624,6 +625,15 @@ class HomeAgentOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_THINKING_ENABLED,
                         default=current_data.get(CONF_THINKING_ENABLED, DEFAULT_THINKING_ENABLED),
+                    ): bool,
+                    vol.Optional(
+                        CONF_CONTINUE_ON_QUESTION,
+                        default=current_options.get(
+                            CONF_CONTINUE_ON_QUESTION,
+                            current_data.get(
+                                CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION
+                            ),
+                        ),
                     ): bool,
                 }
             ),
@@ -924,15 +934,6 @@ class HomeAgentOptionsFlow(config_entries.OptionsFlow):
                         ) 
                         // 60,
                     ): vol.All(vol.Coerce(int), vol.Range(min=1, max=120)),
-                    vol.Required(
-                        CONF_CONTINUE_ON_QUESTION,
-                        default=current_options.get(
-                            CONF_CONTINUE_ON_QUESTION,
-                            current_data.get(
-                                CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION
-                            ),
-                        ),
-                    ): bool,
                 }
             ),
         )
