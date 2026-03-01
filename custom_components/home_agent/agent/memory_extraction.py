@@ -263,7 +263,6 @@ class MemoryExtractionMixin:
         tools: list[dict[str, Any]] | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
-        stream: str | None = None,
     ) -> dict[str, Any]:
         """Call the LLM API (provided by LLMMixin)."""
         ...
@@ -455,7 +454,6 @@ Return ONLY valid JSON, no other text:
                 messages,
                 tools=None,
                 temperature=0.3,
-                stream="false",
             )
             _LOGGER.debug(response) 
             content = (
