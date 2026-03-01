@@ -1324,33 +1324,22 @@ class HomeAgent(
             device_id=device_id,
         )
 
-        # Extract result from chat log
-        # --- ALT ---
-        # return conversation.async_get_result_from_chat_log(user_input, chat_log)
-        # --- NEU ---
-        # Manually construct the result to set continue_conversation
-        final_response_text = ""
-        if chat_log:
-            # Find the last assistant content in the chat log
-            for content_item in reversed(chat_log.async_get_contents()):
-                if isinstance(content_item, conversation.AssistantContent):
-                    if content_item.content:
-                        final_response_text = content_item.content
-                        break
-
-        continue_conv = False
         if self.config.get(CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION):
-            if final_response_text.strip().endswith("?"):
+            # Extract final response to check for "?"
+            final_response = ""
+            for content_item in new_content:
+                if isinstance(content_item, conversation.AssistantContent) and content_item.content:
+                    final_response = content_item.content
+                    break
+
+            if final_response.strip().endswith("?"):
                 continue_conv = True
                 _LOGGER.debug(
                     "Streaming: Setting continue_conversation=True because response is a question"
                 )
- 
-        return ha_conversation.ConversationResult(
-            response=conversation.async_get_response_from_chat_log(chat_log),
-            conversation_id=user_input.conversation_id,
-            continue_conversation=continue_conv,
-        )
+            chat_log.continue_conversation = True
+        return conversation.async_get_result_from_chat_log(user_input, chat_log)
+    
 
     async def _async_process_synchronous(
         self, user_input: ha_conversation.ConversationInput
