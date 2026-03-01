@@ -457,7 +457,7 @@ Return ONLY valid JSON, no other text:
                 temperature=0.3,
                 stream="false",
             )
-
+            _LOGGER.debug(response) 
             content = (
                 response.get("choices", [{}])[0].get("message", {}).get("content", "")
             )
