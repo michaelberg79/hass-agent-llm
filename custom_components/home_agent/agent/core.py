@@ -1331,15 +1331,16 @@ class HomeAgent(
                 if isinstance(content_item, conversation.AssistantContent) and content_item.content:
                     final_response = content_item.content
                     break
-
+            continue_conv = False
             if final_response.strip().endswith("?"):
                 continue_conv = True
                 _LOGGER.debug(
                     "Streaming: Setting continue_conversation=True because response is a question"
                 )
-            chat_log.continue_conversation = True
-        return conversation.async_get_result_from_chat_log(user_input, chat_log)
-    
+
+        result = conversation.async_get_result_from_chat_log(user_input, chat_log)
+        result.response.continue_conversation = continue_conv
+        return result
 
     async def _async_process_synchronous(
         self, user_input: ha_conversation.ConversationInput
