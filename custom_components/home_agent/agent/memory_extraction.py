@@ -256,7 +256,7 @@ class MemoryExtractionMixin:
             )
         return self._memory_validator
 
-    # This method is provided by LLMMxiin
+    # This method is provided by LLMMixin
     async def _call_llm(
         self,
         messages: list[dict[str, Any]],
@@ -455,7 +455,7 @@ Return ONLY valid JSON, no other text:
                 tools=None,
                 temperature=0.3,
             )
-            _LOGGER.debug(response) 
+
             content = (
                 response.get("choices", [{}])[0].get("message", {}).get("content", "")
             )

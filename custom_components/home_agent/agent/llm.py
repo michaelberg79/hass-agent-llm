@@ -223,7 +223,7 @@ class LLMMixin:
         proxy_headers = self.config.get(CONF_LLM_PROXY_HEADERS, {})
         if proxy_headers:
             headers.update(proxy_headers)
-            
+
         payload: dict[str, Any] = {
             "model": self.config[CONF_LLM_MODEL],
             "messages": messages,

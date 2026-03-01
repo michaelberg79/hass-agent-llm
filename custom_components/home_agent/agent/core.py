@@ -536,6 +536,7 @@ class HomeAgent(
                     err,
                     exc_info=True,
                 )
+
         if registered_count > 0:
             _LOGGER.info(
                 "Successfully registered %d custom tool(s)",
@@ -1338,6 +1339,7 @@ class HomeAgent(
                     "Streaming: Setting continue_conversation=True because response is a question"
                 )
 
+        # Extract result from chat log
         result = conversation.async_get_result_from_chat_log(user_input, chat_log)
         result.response.continue_conversation = continue_conv
         return result
