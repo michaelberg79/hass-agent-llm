@@ -143,6 +143,8 @@ from ..const import (
     EVENT_STREAMING_ERROR,
     CONF_MEMORY_EXTRACTION_ENABLED,
     TOOL_QUERY_EXTERNAL_LLM,
+    CONF_CONTINUE_ON_QUESTION,
+    DEFAULT_CONTINUE_ON_QUESTION,
 )
 from ..exceptions import (
     HomeAgentError,
@@ -1324,7 +1326,29 @@ class HomeAgent(
         )
 
         # Extract result from chat log
-        return conversation.async_get_result_from_chat_log(user_input, chat_log)
+        # --- ALT ---
+        # return conversation.async_get_result_from_chat_log(user_input, chat_log)
+        # --- NEU ---
+        # Manually construct the result to set continue_conversation
+        final_response_text = ""
+        if chat_log and chat_log.new_get_last_assistant_content():
+            last_content = chat_log.new_get_last_assistant_content()
+            if last_content and last_content.content:
+                final_response_text = last_content.content
+
+        continue_conv = False
+        if self.config.get(CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION):
+            if final_response_text.strip().endswith("?"):
+                continue_conv = True
+                _LOGGER.debug(
+                    "Streaming: Setting continue_conversation=True because response is a question"
+                )
+
+        return ha_conversation.ConversationResult(
+            response=conversation.async_get_response_from_chat_log(chat_log),
+            conversation_id=user_input.conversation_id,
+            continue_conversation=continue_conv,
+        )
 
     async def _async_process_synchronous(
         self, user_input: ha_conversation.ConversationInput
@@ -1352,10 +1376,27 @@ class HomeAgent(
         intent_response = intent.IntentResponse(language=user_input.language)
         intent_response.async_set_speech(response_text)
 
-        return ha_conversation.ConversationResult(
+        # --- ALT (ca. Zeile 905) ---
+        # return ha_conversation.ConversationResult(
+        #     response=intent_response,
+        #     conversation_id=user_input.conversation_id,
+        # )
+        continue_conv = False
+        if self.config.get(CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION):
+            if response_text.strip().endswith("?"):
+                continue_conv = True
+                _LOGGER.debug(
+                    "Sync: Setting continue_conversation=True because response is a question"
+                )
+        # --- NEU ---
+        result = ha_conversation.ConversationResult(
             response=intent_response,
             conversation_id=user_input.conversation_id,
+            continue_conversation=continue_conv
         )
+
+        
+        return result
 
     async def _process_conversation(
         self,

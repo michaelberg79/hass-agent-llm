@@ -30,6 +30,7 @@ from .const import (
     CONF_ADDITIONAL_COLLECTIONS,
     CONF_ADDITIONAL_L2_DISTANCE_THRESHOLD,
     CONF_ADDITIONAL_TOP_K,
+    CONF_CONTINUE_ON_QUESTION,
     CONF_CONTEXT_FORMAT,
     CONF_CONTEXT_MODE,
     CONF_DEBUG_LOGGING,
@@ -88,6 +89,7 @@ from .const import (
     CONTEXT_MODE_DIRECT,
     CONTEXT_MODE_VECTOR_DB,
     DEFAULT_ADDITIONAL_COLLECTIONS,
+    DEFAULT_CONTINUE_ON_QUESTION,
     DEFAULT_ADDITIONAL_L2_DISTANCE_THRESHOLD,
     DEFAULT_ADDITIONAL_TOP_K,
     DEFAULT_CONTEXT_FORMAT,
@@ -923,6 +925,15 @@ class HomeAgentOptionsFlow(config_entries.OptionsFlow):
                         )
                         // 60,  # Convert seconds to minutes for display
                     ): vol.All(vol.Coerce(int), vol.Range(min=1, max=120)),
+                    vol.Required(
+                        CONF_CONTINUE_ON_QUESTION,
+                        default=current_options.get(
+                            CONF_CONTINUE_ON_QUESTION,
+                            current_data.get(
+                                CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION
+                            ),
+                        ),
+                    ): bool,
                 }
             ),
         )
