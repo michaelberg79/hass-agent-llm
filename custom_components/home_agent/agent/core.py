@@ -536,7 +536,6 @@ class HomeAgent(
                     err,
                     exc_info=True,
                 )
-
         if registered_count > 0:
             _LOGGER.info(
                 "Successfully registered %d custom tool(s)",
@@ -1331,10 +1330,13 @@ class HomeAgent(
         # --- NEU ---
         # Manually construct the result to set continue_conversation
         final_response_text = ""
-        if chat_log and chat_log.new_get_last_assistant_content():
-            last_content = chat_log.new_get_last_assistant_content()
-            if last_content and last_content.content:
-                final_response_text = last_content.content
+        if chat_log:
+            # Find the last assistant content in the chat log
+            for content_item in reversed(chat_log.async_get_contents()):
+                if isinstance(content_item, conversation.AssistantContent):
+                    if content_item.content:
+                        final_response_text = content_item.content
+                        break
 
         continue_conv = False
         if self.config.get(CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION):
@@ -1343,7 +1345,7 @@ class HomeAgent(
                 _LOGGER.debug(
                     "Streaming: Setting continue_conversation=True because response is a question"
                 )
-
+ 
         return ha_conversation.ConversationResult(
             response=conversation.async_get_response_from_chat_log(chat_log),
             conversation_id=user_input.conversation_id,
