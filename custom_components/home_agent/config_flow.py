@@ -224,8 +224,7 @@ def _migrate_legacy_backend(config: dict[str, Any]) -> dict[str, Any]:
         _LOGGER.info("Migrated legacy llm_backend setting '%s' to llm_proxy_headers", backend)
 
     return config
-
-
+@config_entries.HANDLERS.register(DOMAIN)
 class HomeAgentConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
     """Handle a config flow for Home Agent.
 
@@ -466,7 +465,6 @@ class HomeAgentConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ig
         return HomeAgentOptionsFlow(config_entry)
 
 
-@config_entries.HANDLERS.register(DOMAIN)
 class HomeAgentOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for Home Agent.
 
