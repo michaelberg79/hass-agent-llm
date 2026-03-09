@@ -85,14 +85,20 @@ def _create_mock_hass(*, minimal: bool = False, with_loop: bool = True, tmp_path
         # Mock async_create_task
         def mock_create_task(coro, *args, **kwargs):
             """Create a task that properly awaits the coroutine."""
-            task = mock.loop.create_task(coro)
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = mock.loop
+            task = loop.create_task(coro)
             created_tasks.append(task)
             return task
 
         mock.async_create_task = MagicMock(side_effect=mock_create_task)
+        mock.async_create_background_task = MagicMock(side_effect=mock_create_task)
         mock._test_tasks = created_tasks
 
         # Mock exposed entities data structure (required by VectorDBManager)
+        # Note: DATA_EXPOSED_ENTITIES = 'homeassistant.exposed_entites' (HA typo, intentional)
         mock_exposed_entities = MagicMock()
         mock_exposed_entities.async_should_expose.return_value = True
         mock.data["homeassistant.exposed_entites"] = mock_exposed_entities

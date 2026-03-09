@@ -124,12 +124,37 @@ class TestContextManagerInitialization:
         assert isinstance(manager._provider, DirectContextProvider)
 
     def test_init_vector_db_mode_fallback(self, mock_hass):
-        """Test initialization with vector DB mode (should fallback to direct)."""
+        """Test initialization with vector DB mode falls back to direct when chromadb unavailable."""
         config = {"mode": CONTEXT_MODE_VECTOR_DB}
         manager = ContextManager(mock_hass, config)
 
-        # Should fallback to DirectContextProvider since VectorDB not implemented
+        # Should fallback to DirectContextProvider since chromadb is not available in test env
         assert isinstance(manager._provider, DirectContextProvider)
+
+    def test_init_vector_db_mode_fallback_on_import_error(self, mock_hass):
+        """Test that vector_db mode gracefully falls back to direct mode on import error."""
+        config = {CONF_CONTEXT_MODE: CONTEXT_MODE_VECTOR_DB}
+
+        with patch.object(
+            ContextManager,
+            "_create_vector_db_provider",
+            side_effect=ImportError("No module named 'chromadb'"),
+        ):
+            manager = ContextManager(mock_hass, config)
+            # Should fall back to direct provider, NOT raise
+            assert isinstance(manager._provider, DirectContextProvider)
+
+    def test_init_direct_mode_failure_raises(self, mock_hass):
+        """Test that direct mode failure still raises ContextInjectionError."""
+        config = {CONF_CONTEXT_MODE: CONTEXT_MODE_DIRECT}
+
+        with patch.object(
+            ContextManager,
+            "_create_direct_provider",
+            side_effect=Exception("Provider creation failed"),
+        ):
+            with pytest.raises(ContextInjectionError, match="Failed to initialize"):
+                ContextManager(mock_hass, config)
 
     def test_init_invalid_mode_fallback(self, mock_hass):
         """Test initialization with invalid mode (should fallback to direct)."""

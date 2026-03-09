@@ -81,7 +81,7 @@ async def test_device_id_priority(session_manager):
 
 
 @pytest.mark.asyncio
-async def test_session_expiration(mock_hass):
+async def test_session_expiration(mock_hass, freezer):
     """Test that sessions expire after timeout."""
     with patch("custom_components.home_agent.conversation_session.Store") as mock_store:
         store_instance = MagicMock()
@@ -99,8 +99,8 @@ async def test_session_expiration(mock_hass):
         result = manager.get_conversation_id(user_id="user_123")
         assert result == "conv_123"
 
-        # Wait for expiration
-        time.sleep(1.1)
+        # Advance time past the timeout without sleeping
+        freezer.tick(1.1)
 
         # Should not be found after expiration
         result = manager.get_conversation_id(user_id="user_123")
