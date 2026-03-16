@@ -1,6 +1,6 @@
 # Home Agent
 
-[![Version](https://img.shields.io/badge/version-0.9.3-blue.svg)](https://github.com/aradlein/hass-agent-llm/releases)
+[![Version](https://img.shields.io/badge/version-0.9.4-blue.svg)](https://github.com/aradlein/hass-agent-llm/releases)
 [![Build Status](https://github.com/aradlein/hass-agent-llm/workflows/CI/badge.svg)](https://github.com/aradlein/hass-agent-llm/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.3.1+-blue.svg)](https://www.home-assistant.io/)
@@ -8,25 +8,21 @@
 
 A highly customizable Home Assistant custom component that provides intelligent conversational AI capabilities with advanced tool calling, context injection, and conversation history management.
 
-## What's New in v0.9.3
+## What's New in v0.9.4
 
-> **Compatibility Notice:** This release targets **Home Assistant 2026.3.1** and **Python 3.14**. It may have backwards compatibility issues with older HA versions or Python 3.12/3.13. If you experience problems, please try a [previous release](https://github.com/aradlein/hass-agent-llm/releases).
-
-- **Python 3.14 Support** - Upgraded `chromadb-client` to `1.5.3` to resolve compatibility issues introduced by Python 3.14 (`imghdr` module removal and other deprecations)
-- **Home Assistant 2026.3.1 Compatibility** - Validated and updated for the latest Home Assistant release
-- **Updated Test Mocks** - Dev test suite updated to align with the chromadb-client 1.5.3 API
+- **Embedding Cache Memory Leak Fix** - Fixed a memory leak where the embedding cache accumulated stale entries for frequently-changing entities (e.g., temperature sensors). The cache now evicts the old entry when an entity's state changes, instead of leaving it to linger (#111)
+- **CI Fixes** - Fixed version validation workflow, resolved flake8 violations, and fixed black formatting issues
 
 [View Full Changelog](https://github.com/aradlein/hass-agent-llm/releases)
 
 ---
 
-### Previous Release: v0.9.2
+### Previous Release: v0.9.3
 
-- **Memory Leak Fixes** - Resolved multiple memory leaks that could cause ~6GB memory growth over time, including unbounded embedding caches, per-request HTTP sessions, and uncapped conversation history storage
-- **LRU Cache Eviction** - Embedding caches now use LRU eviction (max 1000 entries) instead of unbounded growth
-- **Debounced Reindexing** - State change reindexing is now batched with a 2-second debounce instead of firing per-change tasks
-- **Proper Resource Cleanup** - HTTP sessions and OpenAI clients are reused and properly cleaned up on shutdown
-- **Setup Timeout Fix** - Moved initial entity indexing to a background task to prevent integration setup from timing out on large installations
+> **Compatibility Notice:** v0.9.3+ targets **Home Assistant 2026.3.1** and **Python 3.14**. It may have backwards compatibility issues with older HA versions or Python 3.12/3.13. If you experience problems, please try a [previous release](https://github.com/aradlein/hass-agent-llm/releases).
+
+- **Python 3.14 Support** - Upgraded `chromadb-client` to `1.5.3` to resolve compatibility issues introduced by Python 3.14 (`imghdr` module removal and other deprecations)
+- **Home Assistant 2026.3.1 Compatibility** - Validated and updated for the latest Home Assistant release
 
 ## Overview
 
@@ -318,7 +314,12 @@ Built with inspiration from the extended_openai_conversation integration. Specia
 
 ## Changelog
 
-### v0.9.3 (Latest)
+### v0.9.4 (Latest)
+- **Fix**: Evict stale embedding cache entries on entity state change — prevents memory leak from frequently-changing entities (#111)
+- **Fix**: Version validation CI workflow grep pattern anchored to avoid false mismatches
+- **Fix**: Black formatting and flake8 compliance
+
+### v0.9.3
 > **Compatibility Notice:** This release targets **Home Assistant 2026.3.1** and **Python 3.14**. It may have backwards compatibility issues with older HA versions or Python 3.12/3.13. If you experience problems, please try a previous release.
 - **Fix**: Upgraded `chromadb-client` to `1.5.3` to resolve Python 3.14 incompatibility (removal of `imghdr` standard library module)
 - **Fix**: Updated dev requirements and test mocks to align with chromadb-client 1.5.3 API
