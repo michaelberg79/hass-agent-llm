@@ -29,11 +29,6 @@ from homeassistant.helpers import (
     entity_registry as er,
 )
 
-if TYPE_CHECKING:
-    from chromadb.api import ClientAPI
-    from chromadb.api.models.Collection import Collection
-
-from .helpers import render_template_value
 from .const import (
     CONF_EMBEDDING_KEEP_ALIVE,
     CONF_OPENAI_API_KEY,
@@ -60,15 +55,6 @@ from .const import (
 )
 from .exceptions import ContextInjectionError
 from .helpers import retry_async
-
-# Conditional imports for ChromaDB
-try:
-    import chromadb
-
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
-
 # Conditional imports for OpenAI embeddings
 try:
     import openai
@@ -76,6 +62,19 @@ try:
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
+
+if TYPE_CHECKING:
+    import chromadb
+    from chromadb.api import ClientAPI
+    from chromadb.api.models.Collection import Collection
+
+    CHROMADB_AVAILABLE = True
+else:
+    try:
+        import chromadb
+        CHROMADB_AVAILABLE = True
+    except (ImportError, RuntimeError):
+        CHROMADB_AVAILABLE = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -589,6 +588,8 @@ class VectorDBManager:
         if self._client is None:
             try:
                 # Create ChromaDB client in executor to avoid blocking the event loop
+                if not CHROMADB_AVAILABLE:
+                    raise ContextInjectionError("ChromaDB library is not installed or failed to import.")
                 # ChromaDB's HttpClient does SSL setup and file I/O during init
                 from functools import partial
 
@@ -617,6 +618,8 @@ class VectorDBManager:
         if self._collection is None:
             try:
                 # Collection operations should also be in executor as they may do I/O
+                if not CHROMADB_AVAILABLE:
+                    raise ContextInjectionError("ChromaDB library is not installed or failed to import.")
                 from functools import partial
 
                 assert self._client is not None  # Type narrowing for mypy

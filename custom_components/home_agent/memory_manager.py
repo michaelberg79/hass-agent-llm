@@ -46,14 +46,15 @@ from .const import (
 )
 from .exceptions import ContextInjectionError
 from .memory.validator import MemoryValidator
-
-# Conditional import for ChromaDB
-try:
-    import chromadb  # noqa: F401
-
+if TYPE_CHECKING:
+    import chromadb
     CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
+else:
+    try:
+        import chromadb
+        CHROMADB_AVAILABLE = True
+    except (ImportError, RuntimeError):
+        CHROMADB_AVAILABLE = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -714,6 +715,8 @@ class MemoryManager:
 
     async def _ensure_chromadb_initialized(self) -> None:
         """Ensure ChromaDB collection is initialized."""
+        if not CHROMADB_AVAILABLE:
+            raise ContextInjectionError("ChromaDB library is not installed or failed to import.")
         if self._collection is None:
             if not self.vector_db_manager or not self.vector_db_manager._client:
                 raise ContextInjectionError("VectorDBManager client not available")
