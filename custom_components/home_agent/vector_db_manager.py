@@ -63,18 +63,14 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
-if TYPE_CHECKING:
+try:
     import chromadb
-    from chromadb.api import ClientAPI
-    from chromadb.api.models.Collection import Collection
-
     CHROMADB_AVAILABLE = True
-else:
-    try:
-        import chromadb
-        CHROMADB_AVAILABLE = True
-    except (ImportError, RuntimeError):
-        CHROMADB_AVAILABLE = False
+    if TYPE_CHECKING:
+        from chromadb.api import ClientAPI
+        from chromadb.api.models.Collection import Collection
+except ImportError:
+    CHROMADB_AVAILABLE = False
 
 _LOGGER = logging.getLogger(__name__)
 

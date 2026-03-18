@@ -18,10 +18,15 @@ import httpx
 from homeassistant.core import HomeAssistant
 
 from ..helpers import render_template_value, retry_async
-
-if TYPE_CHECKING:
-    from chromadb.api import ClientAPI
-    from chromadb.api.models.Collection import Collection
+# Conditional imports for ChromaDB
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+    if TYPE_CHECKING:
+        from chromadb.api import ClientAPI
+        from chromadb.api.models.Collection import Collection
+except ImportError:
+    CHROMADB_AVAILABLE = False
 
 from ..const import (
     CONF_ADDITIONAL_COLLECTIONS,
@@ -65,14 +70,6 @@ from ..exceptions import ContextInjectionError, EmbeddingTimeoutError
 EMBEDDING_CACHE_MAX_SIZE = 1000
 from .base import ContextProvider
 from .direct import DirectContextProvider
-
-# Conditional imports for ChromaDB
-try:
-    import chromadb
-
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
 
 # Conditional imports for OpenAI embeddings
 try:
