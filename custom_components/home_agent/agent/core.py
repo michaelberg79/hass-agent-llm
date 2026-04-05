@@ -901,7 +901,7 @@ class HomeAgent(
         user_message = self._preprocess_user_message(user_input.text)
         device_id = user_input.device_id
         user_id = user_input.context.user_id if user_input.context else None
-
+        tools_history_string = ""
         # Get or create persistent conversation ID for voice interactions
         conversation_id = user_input.conversation_id
         if conversation_id is None:
@@ -1035,6 +1035,7 @@ class HomeAgent(
 
         # Add current user message
         messages.append({"role": "user", "content": user_message})
+        _LOGGER.debug("Messages: %s", messages)
 
         # Tool calling loop (max iterations to prevent infinite loops)
         max_iterations = self.config.get(
@@ -1165,8 +1166,10 @@ class HomeAgent(
                                 },
                             }
                             msg["tool_calls"].append(tool_call_dict)
+                            tools_history_string += json.dumps(tool_call_dict)
                         # Add Tool Call to ConversationHistory.
-                            tools_history_string += f"\n- Tool: {tc.tool_name} (ID: {tc.id}) mit Args: {tc.tool_args}"
+                        
+                        
 
                     messages.append(msg)
 
@@ -1263,8 +1266,8 @@ class HomeAgent(
                 if tools_history_string:
                     self.conversation_manager.add_message(
                         conversation_id,
-                        "assistant",
-                        f"Following tools were called: {tools_history_string}",
+                        "tool",
+                        tools_history_string,
                     )
                 self.conversation_manager.add_message(
                     conversation_id, "assistant", final_response
