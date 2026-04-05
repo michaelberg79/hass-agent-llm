@@ -1332,6 +1332,23 @@ class HomeAgent(
             device_id=device_id,
         )
 
+        if self.config.get(CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION):
+            # Extract final response to check for "?"
+            final_response = ""
+            for content_item in new_content:
+                if (
+                    isinstance(content_item, conversation.AssistantContent)
+                    and content_item.content
+                ):
+                    final_response = content_item.content
+                    break
+            continue_conv = False
+            if final_response.strip().endswith("?"):
+                continue_conv = True
+                _LOGGER.debug(
+                    "Streaming: Setting continue_conversation=True because response is a question"
+                )
+
         # Extract result from chat log
         return conversation.async_get_result_from_chat_log(user_input, chat_log)
 
