@@ -1154,8 +1154,9 @@ class HomeAgent(
                         metrics["tool_calls"] += len(content_item.tool_calls)
 
                         # Add tool calls to message
-                        msg["tool_calls"] = [
-                            {
+                        msg["tool_calls"] = []
+                        for tc in content_item.tool_calls:
+                            tool_call_dict = {
                                 "id": tc.id,
                                 "type": "function",
                                 "function": {
@@ -1163,8 +1164,9 @@ class HomeAgent(
                                     "arguments": json.dumps(tc.tool_args),
                                 },
                             }
-                            for tc in content_item.tool_calls
-                        ]
+                            msg["tool_calls"].append(tool_call_dict)
+                        # Add Tool Call to ConversationHistory.
+                            tools_history_string += f"\n- Tool: {tc.tool_name} (ID: {tc.id}) mit Args: {tc.tool_args}"
 
                     messages.append(msg)
 
@@ -1258,8 +1260,15 @@ class HomeAgent(
 
             self.conversation_manager.add_message(conversation_id, "user", user_message)
             if final_response:
-                self.conversation_manager.add_message(conversation_id, "assistant", final_response)
-
+                if tools_history_string:
+                    self.conversation_manager.add_message(
+                        conversation_id,
+                        "assistant",
+                        f"Following tools were called: {tools_history_string}",
+                    )
+                self.conversation_manager.add_message(
+                    conversation_id, "assistant", final_response
+                )
         # Extract and store memories if enabled (fire and forget)
         if self.config.get(CONF_MEMORY_EXTRACTION_ENABLED, DEFAULT_MEMORY_EXTRACTION_ENABLED):
             # Extract final response for memory extraction
@@ -1319,6 +1328,23 @@ class HomeAgent(
             user_id=user_id,
             device_id=device_id,
         )
+
+        if self.config.get(CONF_CONTINUE_ON_QUESTION, DEFAULT_CONTINUE_ON_QUESTION):
+            # Extract final response to check for "?"
+            final_response = ""
+            for content_item in new_content:
+                if (
+                    isinstance(content_item, conversation.AssistantContent)
+                    and content_item.content
+                ):
+                    final_response = content_item.content
+                    break
+            continue_conv = False
+            if final_response.strip().endswith("?"):
+                continue_conv = True
+                _LOGGER.debug(
+                    "Streaming: Setting continue_conversation=True because response is a question"
+                )
 
         # Extract result from chat log
         return conversation.async_get_result_from_chat_log(user_input, chat_log)
