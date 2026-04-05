@@ -190,6 +190,17 @@ class VectorDBContextProvider(ContextProvider):
                     try:
                         entity_state = self._get_entity_state(entity_id)
                         if entity_state:
+                            # --- FIX START: Convert ComputedNameType to String ---
+                            # Ensure that aliases and names are cast to primitive strings 
+                            # to prevent serialization issues or type mismatches 
+                            # before they are added to the list.
+                            if "aliases" in entity_state and isinstance(entity_state["aliases"], list):
+                                entity_state["aliases"] = [str(a) for a in entity_state["aliases"]]
+                            
+                            if "name" in entity_state:
+                                entity_state["name"] = str(entity_state["name"])
+                            # --- FIX ENDE ---
+
                             # Add available services for this entity
                             entity_state["available_services"] = self._get_entity_services(
                                 entity_id
