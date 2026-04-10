@@ -569,15 +569,21 @@ class VectorDBManager:
                 parts.append(f"Source: {source}")
 
         # Add location information if available
+        entity_registry = er.async_get(self.hass)
+        area_registry = ar.async_get(self.hass)
+        device_registry = dr.async_get(self.hass)
         try:
-            entity_registry = er.async_get(self.hass)
-            area_registry = ar.async_get(self.hass)
-            device_registry = dr.async_get(self.hass)
 
             if (entity_entry := entity_registry.async_get(entity_id)) and entity_entry.device_id:
                 if (device_entry := device_registry.async_get(entity_entry.device_id)) and device_entry.area_id:
                     if area := area_registry.async_get_area(device_entry.area_id):
                         parts.append(f"Location: {area.name}")
+            clean_aliases = [
+                a for a in entity_entry.aliases 
+                if "ComputedNameType" not in str(a)
+]
+            if (clean_aliases):
+                parts.append(f"Aliases: {clean_aliases}")
 
         except Exception:
             _LOGGER.debug("Could not determine area for entity: %s", entity_id)
