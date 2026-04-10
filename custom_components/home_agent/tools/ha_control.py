@@ -182,18 +182,6 @@ class HomeAssistantControlTool(BaseTool):
         if not entity_id:
             raise ValidationError("Parameter 'entity_id' is required")
 
-        # Validate action
-        valid_actions = [
-            ACTION_TURN_ON,
-            ACTION_TURN_OFF,
-            ACTION_TOGGLE,
-            ACTION_SET_VALUE,
-        ]
-        if action not in valid_actions:
-            raise ValidationError(
-                f"Invalid action '{action}'. Must be one of: {', '.join(valid_actions)}"
-            )
-
         # Validate entity ID format
         if "." not in entity_id:
             raise ValidationError(
@@ -464,58 +452,33 @@ class HomeAssistantControlTool(BaseTool):
         Raises:
             ToolExecutionError: If entity doesn't support requested capability
         """
-        # Get the domain's service mapping
         domain_mapping = DOMAIN_SERVICE_MAPPINGS.get(domain)
-        if not domain_mapping:
-            # Fallback to generic mapping for unmapped domains
-            _LOGGER.warning(
-                "No service mapping found for domain '%s', using generic mapping",
-                domain,
-            )
-            if action == ACTION_TURN_ON:
-                return SERVICE_TURN_ON
-            elif action == ACTION_TURN_OFF:
-                return SERVICE_TURN_OFF
-            elif action == ACTION_TOGGLE:
-                return SERVICE_TOGGLE
-            elif action == ACTION_SET_VALUE:
-                # Default to turn_on for set_value on unknown domains
-                return SERVICE_TURN_ON
-            else:
-                return None
+        action_map = domain_mapping.get("action_service_map", {}) if domain_mapping else {}
 
-        # Get the action mapping for this domain
-        action_map = domain_mapping.get("action_service_map", {})
-        service_or_map = action_map.get(action)
+        # Case 1: Direct mapping from abstract action (turn_on, turn_off, set_value)
+        service_candidate = action_map.get(action)
 
-        if service_or_map is None:
+        if service_candidate:
+            # Handle set_value, which can map to multiple services based on parameters
+            if action == ACTION_SET_VALUE and isinstance(service_candidate, dict):
+                for param, service in service_candidate.items():
+                    if param in parameters:
+                        return self._validate_feature_for_service(entity_id, domain, service)
+                return None  # No matching parameter found
+            return str(service_candidate)
+
+        # Case 2: The 'action' is a direct service name (e.g., "open_cover")
+        if action == ACTION_SET_VALUE:
+            # For set_value, we must find the service based on parameters
+            for param, service in action_map.get(ACTION_SET_VALUE, {}).items():
+                if param in parameters:
+                    return self._validate_feature_for_service(entity_id, domain, service)
             return None
 
-        # Handle SET_VALUE action (requires parameter-based mapping)
-        if action == ACTION_SET_VALUE:
-            if isinstance(service_or_map, dict):
-                # Parameter-based mapping (e.g., {"position": "set_cover_position"})
-                # Find which parameter is present and map to the correct service
-                for param_name, service_name in service_or_map.items():
-                    if param_name in parameters:
-                        # Check if this service requires a specific feature
-                        service = self._validate_feature_for_service(
-                            entity_id, domain, service_name
-                        )
-                        return service
-                # No matching parameter found
-                _LOGGER.warning(
-                    "No matching parameter found for %s set_value with params %s",
-                    domain,
-                    list(parameters.keys()),
-                )
-                return None
-            else:
-                # Simple service name (e.g., "set_datetime")
-                return service_or_map  # type: ignore[return-value]
-        else:
-            # Direct action mapping (turn_on, turn_off, toggle)
-            return service_or_map  # type: ignore[return-value]
+        # Assume the action is a valid service name for the domain
+        # We can add a check against hass.services if needed, but for now, we trust the LLM
+        # based on the available_services provided by ha_query.
+        return self._validate_feature_for_service(entity_id, domain, action)
 
     def _validate_feature_for_service(
         self,
