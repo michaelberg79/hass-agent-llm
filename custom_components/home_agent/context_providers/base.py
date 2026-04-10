@@ -371,6 +371,10 @@ class ContextProvider(ABC):
             if entity_entry:
                 if entity_entry.aliases:
                     aliases = list(entity_entry.aliases)
+                    # Filter out internal ComputedNameType aliases, as they are not user-facing
+                    aliases = [
+                        a for a in aliases if not str(a).startswith("ComputedNameType.")
+                    ]
                 if include_labels and entity_entry.labels:
                     labels = list(entity_entry.labels)
         except (AttributeError, RuntimeError):
