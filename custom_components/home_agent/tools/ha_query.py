@@ -358,19 +358,20 @@ class HomeAssistantQueryTool(BaseTool):
                 f"voice assistant settings."
             )
 
-    def _get_entity_services(self, entity_id: str) -> list[str]:
-        """Get available services for an entity based on its domain.
+    def _get_entity_services(self, entity_id: str, include_parameter_hints: bool = True) -> list[str]:
+        """Get available services for an entity based on its domain and features.
 
         Args:
             entity_id: The entity ID to get services for
+            include_parameter_hints: Whether to include parameter hints in service names.
 
         Returns:
-            List of available service names for this entity
+            List of available service names for this entity.
         """
         # Import the unified function from base.py
         from ..context_providers.base import get_entity_available_services
 
-        return get_entity_available_services(self.hass, entity_id)
+        return get_entity_available_services(self.hass, entity_id, include_parameter_hints=include_parameter_hints)
 
     def _format_entity_state(
         self,
@@ -414,7 +415,7 @@ class HomeAssistantQueryTool(BaseTool):
                 del entity_data["attributes"]["brightness"]
 
         # Add available services
-        entity_data["available_services"] = self._get_entity_services(state.entity_id)
+        entity_data["available_services"] = self._get_entity_services(state.entity_id, include_parameter_hints=True)
 
         return entity_data
 
