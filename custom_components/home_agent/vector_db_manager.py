@@ -580,12 +580,11 @@ class VectorDBManager:
                 if (device_entry := device_registry.async_get(entity_entry.device_id)) and device_entry.area_id:
                     if area := area_registry.async_get_area(device_entry.area_id):
                         parts.append(f"Location: {area.name}")
-            clean_aliases = [
-                a for a in entity_entry.aliases 
-                if "ComputedNameType" not in str(a)
-]
-            if (clean_aliases):
-                parts.append(f"Aliases: {clean_aliases}")
+                if entity_entry.aliases:
+                    clean_aliases = [a for a in entity_entry.aliases if isinstance(a, str)]
+                    
+                    if clean_aliases:
+                        parts.append(f"Aliases: {', '.join(clean_aliases)}")
 
         except Exception:
             _LOGGER.debug("Could not determine area for entity: %s", entity_id)
